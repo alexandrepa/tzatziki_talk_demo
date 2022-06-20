@@ -2,7 +2,7 @@ create table if not exists booking
 (
     id serial primary key,
     order_id text      not null,
-    item_id     text      not null,
+    item     text      not null,
     quantity       int       not null
 );
 
