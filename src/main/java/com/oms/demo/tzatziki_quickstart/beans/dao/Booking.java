@@ -17,6 +17,6 @@ public class Booking {
     @Id
     private String id;
     private String orderId;
-    private String itemId;
+    private String item;
     private Integer quantity;
 }
