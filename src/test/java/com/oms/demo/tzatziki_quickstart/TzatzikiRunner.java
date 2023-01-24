@@ -1,6 +1,7 @@
 package com.oms.demo.tzatziki_quickstart;
 
 import com.decathlon.tzatziki.steps.KafkaSteps;
+import com.decathlon.tzatziki.utils.MockFaster;
 import io.cucumber.junit.Cucumber;
 import io.cucumber.junit.CucumberOptions;
 import io.cucumber.spring.CucumberContextConfiguration;
@@ -34,18 +35,18 @@ public class TzatzikiRunner {
 
     public static class Initializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
         public void initialize(@NotNull ConfigurableApplicationContext configurableApplicationContext) {
-            KafkaSteps.start(Map.of(
-                    "transaction.state.log.replication.factor", "1",
-                    "transaction.state.log.min.isr", "1",
-                    "transaction.state.log.num.partitions", "1"
-            ));
+            KafkaSteps.start();
             TestPropertyValues.of(
-                    "spring.flyway.schemas=demo",
                     "spring.datasource.url=" + postgreSQLContainer.getJdbcUrl(),
                     "spring.datasource.username=demo",
                     "spring.datasource.password=demo",
-                    "spring.datasource.driver-class-name=org.postgresql.Driver"
+                    "spring.datasource.driver-class-name=org.postgresql.Driver",
+                    "default-properties.gateway_url=" + MockFaster.url(),
+                    "default-properties.kafka_bootstrap_url=" + KafkaSteps.bootstrapServers(),
+                    "default-properties.kafka_schema_registry_url=" + KafkaSteps.schemaRegistryUrl()
             ).applyTo(configurableApplicationContext);
+
+            KafkaSteps.autoSeekTopics("FR_stock_movements", "IT_stock_movements");
         }
     }
 }

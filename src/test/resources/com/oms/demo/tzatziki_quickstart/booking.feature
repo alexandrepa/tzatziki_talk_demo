@@ -1,37 +1,76 @@
-Feature: [ITEM BOOKING] We can book an item for a given order id. We can also check which items have been booked for a given order id.
-  These operations are through REST API.
+Feature: [ORDER BOOKING] We can book items for an order using /orders/<orderId>/create providing the items to book along with their quantity.
+  The target warehouse should be extracted from the two first characters of the orderId
+  It should then:
+  - call /stock-api/<warehouse>/book with the given items
+  - fetch price from /price-api/items/{item_id} for every item
+  - add a row to booking table with the booked items and the price when the call was done
+  - send a 'BOOK' stock movement to <warehouse>_stock_movements for financial purposes
+  - return to the caller the booked items along with their price
 
-  Scenario Template: We can book an item for a given order id. This should trigger a database insert with order_id, article_id and quantity.
-  A message should be sent through KAFKA to inform partners of the stock movement.
-    Given a root logger set to INFO
-    When we post on "/orders/<orderId>/book":
+  Background:
+    * a root logger set to INFO
+    * this avro schema:
     """
-    {{#foreach [<itemsToBook>]}}
-    - item: '{{this.name}}'
-      quantity: {{this.quantity}}
-    {{/foreach}}
+    {{{[&avro/stock_movement.avsc]}}}
+    """
+
+  Scenario Template: Nominal case
+    Given that posting on "/stock-api/.*/book" will return:
+    """
+    <itemsToBook>
+    """
+    Given that getting on "/price-api/items/(.*)" will return:
+    """
+    $1.99
+    """
+    When we post on "/orders/<orderId>/create":
+    """
+    <itemsToBook>
     """
     Then we received a status OK_200 and:
     """
-    Booking done
+    {{#foreach '<itemsToBook>'}}
+    - item_id: '{{this.item_id}}'
+      quantity: {{this.quantity}}
+      price: {{this.item_id}}.99
+    {{/foreach}}
     """
-    Then the booking table contains:
+    And "/stock-api/<warehouse>/book" has received a POST and:
     """
-    {{#foreach [<itemsToBook>]}}
-    - id: ?notNull
-      order_id: <orderId>
-      item: '{{this.name}}'
+    <itemsToBook>
+    """
+    And the interactions on "/price-api/items/.*" were only:
+    """
+    {{#foreach '<itemsToBook>'}}
+    - request:
+        method: GET
+        headers.warehouse: <warehouse>
+      response.body.payload: {{this.item_id}}.99
+    {{/foreach}}
+    """
+    And the booking table contains exactly:
+    """
+    id: ?notNull
+    order_id: <orderId>
+    booked_items_with_price:
+    {{#foreach '<itemsToBook>'}}
+      - item_id: '{{this.item_id}}'
+        quantity: {{this.quantity}}
+        price: {{this.item_id}}.99
+    {{/foreach}}
+    """
+    And the <warehouse>_stock_movements topic contains these StockMovements:
+    """
+    {{#foreach '<itemsToBook>'}}
+    - warehouse: <warehouse>
+      item_id: '{{this.item_id}}'
+      stock_movement_type: BOOK
+      price: {{this.item_id}}.99
       quantity: {{this.quantity}}
     {{/foreach}}
     """
-    And the stock_update topic contains these json messages:
-    """
-    {{#foreach [<itemsToBook>]}}
-    - order_id: <orderId>
-      item: '{{this.name}}'
-      quantity: {{this.quantity}}
-    {{/foreach}}
-    """
+
     Examples:
-      | orderId | itemsToBook                                                            |
-      | 1       | [{"name": "t-shirt", "quantity": 1}, {"name": "short", "quantity": 2}] |
+      | orderId | itemsToBook                                                        | warehouse |
+      | FR1     | [{"item_id": "1", "quantity": 1}, {"item_id": "2", "quantity": 2}] | FR        |
+      | IT2     | [{"item_id": "1", "quantity": 2}, {"item_id": "3", "quantity": 1}] | IT        |
