@@ -23,9 +23,9 @@ public class PriceApiCallService {
         this.appConfig = appConfig;
     }
 
-    public Double getPrice(String warehouse, String itemId) {
+    public Double getPrice(String country, String itemId) {
         HttpHeaders headers = new HttpHeaders();
-        headers.add("warehouse", warehouse);
+        headers.add("country", country);
         try {
 
             return priceApiRestTemplate.exchange(
