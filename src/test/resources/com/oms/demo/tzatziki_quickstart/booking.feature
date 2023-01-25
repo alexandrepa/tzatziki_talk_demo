@@ -13,15 +13,15 @@ Feature: [ORDER BOOKING] We can book items for an order using /warehouses/{wareh
     """
     {{{[&avro/stock_movement.avsc]}}}
     """
+    * getting on "/price-api/items/(.*)" will return:
+    """
+    $1.99
+    """
 
   Scenario Template: Nominal case
     Given that posting on "/stock-api/.*/book" will return:
     """
     <itemsToBook>
-    """
-    Given that getting on "/price-api/items/(.*)" will return:
-    """
-    $1.99
     """
     When we post on "/warehouses/<warehouse>/orders":
     """
@@ -80,3 +80,40 @@ Feature: [ORDER BOOKING] We can book items for an order using /warehouses/{wareh
       | warehouse | country | itemsToBook                                                        |
       | FR01      | FR      | [{"item_id": "1", "quantity": 1}, {"item_id": "2", "quantity": 2}] |
       | IT01      | IT      | [{"item_id": "1", "quantity": 2}, {"item_id": "3", "quantity": 1}] |
+
+  Scenario: Price API unavailable, should retry till it is up
+    Given that posting on "/stock-api/.*/book" will return:
+    """
+    - item_id: '1'
+      quantity: 1
+    - item_id: '2'
+      quantity: 2
+    """
+    And that "/price-api/items/1" is mocked as:
+    """
+    response:
+    - status: SERVICE_UNAVAILABLE_503
+      consumptions: 2
+    - delay: 500
+      headers.Content-Type: text/plain
+      body.payload: 1.99
+    """
+    When we post on "/warehouses/FR_1/orders":
+    """
+    - item_id: '1'
+      quantity: 1
+    - item_id: '2'
+      quantity: 2
+    """
+    Then we received a status OK_200 and:
+    """
+    booked_items_with_price:
+    - item_id: '1'
+      quantity: 1
+      price: 1.99
+    - item_id: '2'
+      quantity: 2
+      price: 2.99
+    """
+    And "/price-api/items/1" has received 3 GETs
+    And "/price-api/items/2" has received 1 GET

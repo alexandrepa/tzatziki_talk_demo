@@ -37,7 +37,7 @@ public class PriceApiCallService {
             ).getBody();
         } catch (RestClientException e) {
             log.warn("Had an exception while trying to get pricing", e);
-            return -1d;
+            return getPrice(country, itemId);
         }
     }
 }
