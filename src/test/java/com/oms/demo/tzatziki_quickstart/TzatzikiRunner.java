@@ -45,8 +45,6 @@ public class TzatzikiRunner {
                     "default-properties.kafka_bootstrap_url=" + KafkaSteps.bootstrapServers(),
                     "default-properties.kafka_schema_registry_url=" + KafkaSteps.schemaRegistryUrl()
             ).applyTo(configurableApplicationContext);
-
-            KafkaSteps.autoSeekTopics("FR_stock_movements", "IT_stock_movements");
         }
     }
 }
