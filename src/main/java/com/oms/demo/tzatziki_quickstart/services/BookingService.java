@@ -5,8 +5,8 @@ import com.oms.demo.tzatziki_quickstart.beans.api.BookedItemWithPrice;
 import com.oms.demo.tzatziki_quickstart.beans.api.ItemToBook;
 import com.oms.demo.tzatziki_quickstart.beans.api.OrderInformation;
 import com.oms.demo.tzatziki_quickstart.beans.dao.Booking;
-import com.oms.demo.tzatziki_quickstart.beans.kafka.generated.StockMovement;
-import com.oms.demo.tzatziki_quickstart.beans.kafka.generated.StockMovementType;
+import com.oms.demo.tzatziki_quickstart.beans.kafka.generated.OrderStatus;
+import com.oms.demo.tzatziki_quickstart.beans.kafka.generated.OrderStatusUpdate;
 import com.oms.demo.tzatziki_quickstart.repositories.BookingRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.avro.generic.GenericRecord;
@@ -40,16 +40,13 @@ public class BookingService {
                         .bookedItemsWithPrice(bookedItemWithPrices)
                         .build());
 
-        String targetTopic = warehouse + "_stock_movements";
-        bookedItemWithPrices.stream().map(bookedItemWithPrice -> StockMovement.newBuilder()
-                        .setWarehouse(warehouse)
-                        .setItemId(bookedItemWithPrice.getItemId())
-                        .setPrice(bookedItemWithPrice.getPrice())
-                        .setStockMovementType(StockMovementType.BOOK)
-                        .setQuantity(bookedItemWithPrice.getQuantity())
-                        .build())
-                .map(stockMovement -> new ProducerRecord<String, GenericRecord>(targetTopic, stockMovement))
-                .forEach(avroKafkaTemplate::send);
+        avroKafkaTemplate.send(new ProducerRecord<>(
+                "order_status_update",
+                OrderStatusUpdate.newBuilder()
+                        .setOrderId(orderId)
+                        .setStatus(OrderStatus.CREATED)
+                        .build()
+        ));
 
         return OrderInformation.builder()
                 .orderId(orderId)

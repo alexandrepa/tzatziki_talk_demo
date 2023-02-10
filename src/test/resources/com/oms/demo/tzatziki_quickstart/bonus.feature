@@ -4,7 +4,7 @@ Feature: Some more examples of Tzatziki usage
     * aVariable is "a-simple-var"
 
   Scenario: We can catch exceptions
-    Then a totallyExpectedException java.lang.Exception is thrown when aBadVariable is:
+    * a totallyExpectedException java.lang.Exception is thrown when aBadVariable is:
     """
     {{[aVariable.substring(42, 42)]}}
     """

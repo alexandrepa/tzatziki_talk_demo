@@ -13,7 +13,7 @@
 	<name>tzatziki-quickstart</name>
 	<description>Demo project for talks about Tzatziki</description>
 	<properties>
-		<tzatziki.version>1.2.23</tzatziki.version>
+		<tzatziki.version>1.3.1</tzatziki.version>
 		<java.version>17</java.version>
 		<testcontainers.version>1.17.2</testcontainers.version>
 	</properties>
@@ -116,18 +116,18 @@
 			<artifactId>tzatziki-spring-jpa</artifactId>
 			<version>${tzatziki.version}</version>
 			<scope>test</scope>
+			<exclusions>
+				<exclusion>
+					<artifactId>jackson-datatype-hibernate5-jakarta</artifactId>
+					<groupId>com.fasterxml.jackson.datatype</groupId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>com.decathlon.tzatziki</groupId>
 			<artifactId>tzatziki-spring-kafka</artifactId>
 			<version>${tzatziki.version}</version>
 			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.avro</groupId>
-			<artifactId>avro</artifactId>
-			<version>1.11.0</version>
-			<scope>compile</scope>
 		</dependency>
 	</dependencies>
 	<dependencyManagement>

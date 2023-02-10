@@ -4,14 +4,14 @@ Feature: [ORDER BOOKING] We can book items for an order using /warehouses/{wareh
   - call /stock-api/{warehouse}/book with the given items
   - fetch price from /price-api/items/{item_id} for every item for the warehouse country
   - add a row to booking table with the order id, booked items and the price when the call was done
-  - send a 'BOOK' stock movement to {warehouse}_stock_movements for financial purposes
+  - send an OrderStatusUpdate in order_status_update topic
   - return to the caller the booked items along with their price
 
   Background:
     * a root logger set to INFO
     * this avro schema:
     """
-    {{{[&avro/stock_movement.avsc]}}}
+    {{{[&avro/order_status_update.avsc]}}}
     """
     * getting on "/price-api/items/(.*)" will return:
     """
@@ -65,15 +65,10 @@ Feature: [ORDER BOOKING] We can book items for an order using /warehouses/{wareh
         price: {{this.item_id}}.99
     {{/foreach}}
     """
-    And the <warehouse>_stock_movements topic contains these StockMovements:
+    And the order_status_update topic contains this OrderStatusUpdate:
     """
-    {{#foreach '<itemsToBook>'}}
-    - warehouse: <warehouse>
-      item_id: '{{this.item_id}}'
-      stock_movement_type: BOOK
-      price: {{this.item_id}}.99
-      quantity: {{this.quantity}}
-    {{/foreach}}
+    order_id: {{orderId}}
+    status: CREATED
     """
 
     Examples:
@@ -95,7 +90,7 @@ Feature: [ORDER BOOKING] We can book items for an order using /warehouses/{wareh
     - status: SERVICE_UNAVAILABLE_503
       consumptions: 2
     - delay: 500
-      headers.Content-Type: text/plain
+      headers.Content-Type: application/json
       body.payload: 1.99
     """
     When we post on "/warehouses/FR_1/orders":
