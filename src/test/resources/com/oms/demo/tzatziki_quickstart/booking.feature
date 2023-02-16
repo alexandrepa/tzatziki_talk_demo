@@ -29,7 +29,7 @@ Feature: [ORDER BOOKING] We can book items for an order using /warehouses/{wareh
     """
     Then we received a status OK_200 and:
     """
-    order_id: ?notNull
+    order_id: ?isUUID
     booked_items_with_price:
     {{#foreach '<itemsToBook>'}}
     - item_id: '{{this.item_id}}'
