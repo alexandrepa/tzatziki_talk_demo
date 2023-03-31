@@ -13,7 +13,7 @@
 	<name>tzatziki-quickstart</name>
 	<description>Demo project for talks about Tzatziki</description>
 	<properties>
-		<tzatziki.version>1.3.1</tzatziki.version>
+		<tzatziki.version>1.3.8</tzatziki.version>
 		<java.version>17</java.version>
 		<testcontainers.version>1.17.2</testcontainers.version>
 	</properties>
