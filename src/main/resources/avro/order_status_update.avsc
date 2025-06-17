@@ -1,0 +1,24 @@
+{
+  "type": "record",
+  "name": "OrderStatusUpdate",
+  "namespace": "com.oms.demo.tzatziki_quickstart.beans.kafka.generated",
+  "fields": [
+    {
+      "name": "order_id",
+      "type": "string"
+    },
+    {
+      "name": "status",
+      "type": {
+        "name": "OrderStatus",
+        "type": "enum",
+        "symbols": [
+          "CREATED",
+          "IN_PREPARATION",
+          "IN_DELIVERY",
+          "DELIVERED"
+        ]
+      }
+    }
+  ]
+}

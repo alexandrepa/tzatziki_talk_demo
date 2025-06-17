@@ -1,13 +1,17 @@
 package com.oms.demo.tzatziki_quickstart.beans.dao;
 
+import com.oms.demo.tzatziki_quickstart.beans.api.BookedItemWithPrice;
+import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Type;
 
-import javax.persistence.*;
+import java.util.List;
 
-@Getter
+@Data
 @Entity
 @Builder
 @NoArgsConstructor
@@ -18,6 +22,8 @@ public class Booking {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
     private String orderId;
-    private String item;
-    private Integer quantity;
+
+    @Type(JsonBinaryType.class)
+    @Column(columnDefinition = "jsonb")
+    private List<BookedItemWithPrice> bookedItemsWithPrice;
 }
