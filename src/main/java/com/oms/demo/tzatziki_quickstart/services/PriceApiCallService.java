@@ -6,8 +6,9 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Map;
@@ -35,7 +36,11 @@ public class PriceApiCallService {
                     Double.class,
                     Map.of("itemId", itemId)
             ).getBody();
-        } catch (RestClientException e) {
+        } catch (HttpServerErrorException e) {
+            if (e.getStatusCode() == HttpStatus.INTERNAL_SERVER_ERROR) {
+                log.warn("Received 500 error from price API for itemId: {}, country: {}", itemId, country);
+                throw e;
+            }
             log.warn("Had an exception while trying to get pricing", e);
             return getPrice(country, itemId);
         }

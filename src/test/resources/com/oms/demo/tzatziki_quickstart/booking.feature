@@ -7,40 +7,38 @@ Feature: [ORDER BOOKING] We can book items for an order using /warehouses/{wareh
   - send an OrderStatusUpdate in order_status_update topic
   - return to the caller the booked items along with their price
 
+
   Background:
-    * a root logger set to INFO
-    * this avro schema:
-    """
-    {{{[&avro/order_status_update.avsc]}}}
-    """
     * getting on "/price-api/items/(.*)" will return:
     """
     $1.99
     """
+    * this avro schema:
+    """
+    {{{[&avro/order_status_update.avsc]}}}
+    """
 
-  Scenario Template: Nominal case
+  Scenario Template: Nominal calse
     Given that posting on "/stock-api/.*/book" will return:
     """
     <itemsToBook>
     """
     When we post on "/warehouses/<warehouse>/orders":
-    """
-    <itemsToBook>
-    """
+            """
+            <itemsToBook>
+            """
     Then we received a status OK_200 and:
-    """
-    order_id: ?isUUID
-    booked_items_with_price:
-    {{#foreach '<itemsToBook>'}}
-    - item_id: '{{this.item_id}}'
-      quantity: {{this.quantity}}
-      price: {{this.item_id}}.99
-    {{/foreach}}
-    """
-    And we log as INFO:
-    """
-    {{[orderId: _response.body.payload.order_id]}}
-    """
+            """
+            order_id: ?isUUID
+            booked_items_with_price:
+            {{#foreach '<itemsToBook>'}}
+            - item_id: '{{this.item_id}}'
+              quantity: {{this.quantity}}
+              price: {{this.item_id}}.99
+            {{/foreach}}
+            """
+    And that orderId is "{{[_response.body.payload.order_id]}}"
+
     And "/stock-api/<warehouse>/book" has received a POST and:
     """
     <itemsToBook>
@@ -65,16 +63,19 @@ Feature: [ORDER BOOKING] We can book items for an order using /warehouses/{wareh
         price: {{this.item_id}}.99
     {{/foreach}}
     """
+
     And the order_status_update topic contains this OrderStatusUpdate:
     """
     order_id: {{orderId}}
     status: CREATED
     """
 
+
     Examples:
-      | warehouse | country | itemsToBook                                                        |
-      | FR01      | FR      | [{"item_id": "1", "quantity": 1}, {"item_id": "2", "quantity": 2}] |
-      | IT01      | IT      | [{"item_id": "1", "quantity": 2}, {"item_id": "3", "quantity": 1}] |
+      | warehouse | itemsToBook                                                        | country |
+      | FR01      | [{"item_id": "1", "quantity": 1}, {"item_id": "2", "quantity": 2}] | FR      |
+      | IT01      | [{"item_id": "1", "quantity": 2}, {"item_id": "3", "quantity": 1}] | IT      |
+
 
   Scenario: Price API unavailable, should retry till it is up
     Given that posting on "/stock-api/.*/book" will return:

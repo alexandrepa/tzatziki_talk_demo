@@ -31,3 +31,5 @@ Feature: Some more examples of Tzatziki usage
     """
     And splitVar contains:
       | a | simple | var |
+
+  Scenario: We can use conditional steps
